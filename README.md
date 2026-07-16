@@ -53,10 +53,10 @@ Para publicar una nueva version:
 4. En GitHub abre `Actions` -> `publish-plugin` -> `Run workflow` y selecciona `main`.
 5. Comprueba que las etapas de instalacion, verificacion y publicacion terminen en verde.
 
-La version 1.0.0 se publico inicialmente con `private: true`: puede instalarla y validarla
-su autor, pero Windy no la ofrece al resto de usuarios. Para solicitar una version publica,
-elimina esa propiedad (o cambiala a `false`), incrementa la version y vuelve a ejecutar el
-workflow. Documentacion oficial: https://docs.windy-plugins.com/getting-started/publishing-plugin.html
+La version 1.0.0 se publico inicialmente con `private: true`. Desde la version 1.0.1 se
+omite esa propiedad para solicitar que el plugin esté disponible publicamente. La
+aprobacion final depende de la revision de Windy. Documentacion oficial:
+https://docs.windy-plugins.com/getting-started/publishing-plugin.html
 
 ## Calibracion
 
