@@ -34,6 +34,30 @@ validacion del contenido de `dist`.
 d3 se empaqueta en el bundle (viene de @windycom/plugin-devtools y esta listado como
 dependencia). Los modulos `@windy/*` se externalizan: los provee Windy en runtime.
 
+## Publicacion y futuras versiones
+
+El repositorio publico es:
+
+    https://github.com/fcoramos/windy-plugin-abaco-de-harrison
+
+La publicacion se realiza con el workflow manual `.github/workflows/publish-plugin.yml`.
+El secreto cifrado `WINDY_API_KEY` ya esta configurado en GitHub y no debe copiarse al
+codigo, al README ni a un commit.
+
+Para publicar una nueva version:
+
+1. Realiza los cambios y ejecuta `npm run verify`.
+2. Incrementa la version tanto en `package.json` como en `src/pluginConfig.ts`; Windy no
+   permite volver a publicar la misma version.
+3. Ejecuta `git add -A`, `git commit -m "descripcion del cambio"` y `git push`.
+4. En GitHub abre `Actions` -> `publish-plugin` -> `Run workflow` y selecciona `main`.
+5. Comprueba que las etapas de instalacion, verificacion y publicacion terminen en verde.
+
+La version 1.0.0 se publico inicialmente con `private: true`: puede instalarla y validarla
+su autor, pero Windy no la ofrece al resto de usuarios. Para solicitar una version publica,
+elimina esa propiedad (o cambiala a `false`), incrementa la version y vuelve a ejecutar el
+workflow. Documentacion oficial: https://docs.windy-plugins.com/getting-started/publishing-plugin.html
+
 ## Calibracion
 
 La curva critica amarillo/rojo usa:
