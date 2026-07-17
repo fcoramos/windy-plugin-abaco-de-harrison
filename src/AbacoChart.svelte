@@ -55,6 +55,8 @@
             none: 'NO HAY ONDA',
             xAxis: 'Diferencia de QNH modelado (hPa): Santiago SCEL − Mendoza SAME',
             yAxis: 'VIENTO EN 500 MB (Kt.)',
+            xAxisCompact: 'ΔQNH modelado SCEL − SAME (hPa)',
+            yAxisCompact: 'Viento 500 hPa (kt)',
             tipDp: 'dP',
             tipWind: 'Viento E-O 500hPa',
             tipDiag: 'Diagnostico',
@@ -68,6 +70,8 @@
             none: 'NO WAVE',
             xAxis: 'Model-derived QNH difference (hPa): Santiago SCEL − Mendoza SAME',
             yAxis: 'WIND AT 500 MB (kt)',
+            xAxisCompact: 'Model ΔQNH SCEL − SAME (hPa)',
+            yAxisCompact: 'Wind 500 hPa (kt)',
             tipDp: 'dP',
             tipWind: 'E-W wind 500hPa',
             tipDiag: 'Diagnosis',
@@ -164,8 +168,11 @@
         const l = L[lang];
         select(svgEl).selectAll('*').remove();
 
-        const margin = { top: 15, right: 15, bottom: 48, left: 55 };
-        const width = svgEl.clientWidth - margin.left - margin.right;
+        const compact = svgEl.clientWidth <= 460;
+        const margin = compact
+            ? { top: 12, right: 8, bottom: 44, left: 46 }
+            : { top: 15, right: 15, bottom: 48, left: 55 };
+        const width = Math.max(1, svgEl.clientWidth - margin.left - margin.right);
         const height = svgEl.clientHeight - margin.top - margin.bottom;
         const g = select(svgEl).append('g')
             .attr('transform', `translate(${margin.left},${margin.top})`);
@@ -212,13 +219,16 @@
 
         // ===== 4. ETIQUETAS DE REGIONES =====
         g.append('text').attr('x', x(20)).attr('y', y(80)).attr('text-anchor', 'middle')
-            .attr('fill', 'white').attr('font-weight', 'bold').attr('font-size', '15px')
+            .attr('fill', 'white').attr('font-weight', 'bold')
+            .attr('font-size', compact ? '11px' : '15px')
             .text(l.strong);
         g.append('text').attr('x', x(5.5)).attr('y', y(37))
-            .attr('fill', 'black').attr('font-weight', 'bold').attr('font-size', '14px')
+            .attr('fill', 'black').attr('font-weight', 'bold')
+            .attr('font-size', compact ? '11px' : '14px')
             .text(l.light);
         g.append('text').attr('x', x(15)).attr('y', y(9)).attr('text-anchor', 'middle')
-            .attr('fill', 'black').attr('font-weight', 'bold').attr('font-size', '14px')
+            .attr('fill', 'black').attr('font-weight', 'bold')
+            .attr('font-size', compact ? '11px' : '14px')
             .text(l.none);
 
         // ===== 5. EJES =====
@@ -227,12 +237,15 @@
             .selectAll('text').attr('font-weight', 'bold');
         g.append('g').call(axisLeft(y).tickValues(yTicks).tickFormat(d => `${d}`))
             .selectAll('text').attr('font-weight', 'bold');
-        g.append('text').attr('x', width / 2).attr('y', height + 42).attr('text-anchor', 'middle')
-            .attr('fill', 'currentColor').attr('font-size', '11px')
-            .text(l.xAxis);
-        g.append('text').attr('transform', 'rotate(-90)').attr('x', -height / 2).attr('y', -42)
-            .attr('text-anchor', 'middle').attr('fill', 'currentColor').attr('font-size', '11px')
-            .text(l.yAxis);
+        g.append('text').attr('x', width / 2).attr('y', height + (compact ? 38 : 42))
+            .attr('text-anchor', 'middle')
+            .attr('fill', 'currentColor').attr('font-size', compact ? '10px' : '11px')
+            .text(compact ? l.xAxisCompact : l.xAxis);
+        g.append('text').attr('transform', 'rotate(-90)').attr('x', -height / 2)
+            .attr('y', compact ? -35 : -42)
+            .attr('text-anchor', 'middle').attr('fill', 'currentColor')
+            .attr('font-size', compact ? '10px' : '11px')
+            .text(compact ? l.yAxisCompact : l.yAxis);
 
         // ===== 6. LOS PUNTOS TEMPORALES =====
         const now = store.get('timestamp') as number;
@@ -335,6 +348,9 @@
 
 <style lang="less">
     svg { width: 100%; height: 420px; }
+    @media (max-width: 480px) {
+        svg { height: clamp(320px, 105vw, 360px); }
+    }
     .chart-status {
         margin: 8px 0;
         font-size: 12px;

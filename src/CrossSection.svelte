@@ -151,14 +151,30 @@
         const l = L[lang];
         select(svgEl).selectAll('*').remove();
 
-        const margin = { top: 14, right: 12, bottom: 44, left: 46 };
-        const width = svgEl.clientWidth - margin.left - margin.right;
+        const compact = svgEl.clientWidth <= 460;
+        const margin = compact
+            ? { top: 12, right: 6, bottom: 42, left: 40 }
+            : { top: 14, right: 12, bottom: 44, left: 46 };
+        const width = Math.max(1, svgEl.clientWidth - margin.left - margin.right);
         const height = svgEl.clientHeight - margin.top - margin.bottom;
         const svg = select(svgEl);
         const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-        // ---- defs: tramas de turbulencia y desenfoque de nubes ----
+        // ---- defs: tramas, punteado, recorte y desenfoque de nubes ----
         const defs = svg.append('defs');
+        const ids = {
+            plotClip: `zonda-plot-clip-${instanceId}`,
+            cloudBlur: `zonda-cloudblur-${instanceId}`,
+            turbLight: `zonda-turbl-${instanceId}`,
+            turbStrong: `zonda-turbs-${instanceId}`,
+            icing: `zonda-icing-${instanceId}`,
+        };
+        defs.append('clipPath')
+            .attr('id', ids.plotClip)
+            .attr('clipPathUnits', 'userSpaceOnUse')
+            .append('rect')
+            .attr('width', width)
+            .attr('height', height);
         const mkHatch = (id: string, color: string, w: number, angle = 45) => {
             defs.append('pattern')
                 .attr('id', id).attr('width', 7).attr('height', 7)
@@ -168,11 +184,19 @@
                 .attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 7)
                 .attr('stroke', color).attr('stroke-width', w);
         };
-        mkHatch('zonda-turbl', '#e8a01f', 2);
-        mkHatch('zonda-turbs', '#e8442a', 3);
-        mkHatch('zonda-icing', '#56c8e8', 2, -45);
+        const mkDots = (id: string, color: string) => {
+            defs.append('pattern')
+                .attr('id', id).attr('width', 6).attr('height', 6)
+                .attr('patternUnits', 'userSpaceOnUse')
+                .append('circle')
+                .attr('cx', 2).attr('cy', 2).attr('r', 1.35)
+                .attr('fill', color);
+        };
+        mkHatch(ids.turbLight, '#e8a01f', 2);
+        mkHatch(ids.turbStrong, '#e8442a', 3);
+        mkDots(ids.icing, '#56c8e8');
         defs.append('filter')
-            .attr('id', 'zonda-cloudblur')
+            .attr('id', ids.cloudBlur)
             .attr('x', '-20%').attr('y', '-20%').attr('width', '140%').attr('height', '140%')
             .append('feGaussianBlur')
             .attr('stdDeviation', 4);
@@ -195,8 +219,10 @@
                 .attr('font-size', '9px').text(`${a / 100}`);
         });
         g.append('text')
-            .attr('transform', 'rotate(-90)').attr('x', -height / 2).attr('y', -32)
-            .attr('text-anchor', 'middle').attr('fill', 'currentColor').attr('font-size', '10px')
+            .attr('transform', 'rotate(-90)').attr('x', -height / 2)
+            .attr('y', compact ? -28 : -32)
+            .attr('text-anchor', 'middle').attr('fill', 'currentColor')
+            .attr('font-size', compact ? '9px' : '10px')
             .text(l.alt);
 
         if (!raw.length) return;
@@ -231,7 +257,8 @@
             col.cells.find(c => c.lvlBottom === lv);
 
         // ---- franjas: nubes + turbulencia (campo continuo) ----
-        const gClouds = g.append('g').attr('filter', 'url(#zonda-cloudblur)');
+        const gFields = g.append('g').attr('clip-path', `url(#${ids.plotClip})`);
+        const gClouds = gFields.append('g').attr('filter', `url(#${ids.cloudBlur})`);
         const stripW = width / NS;
         for (let k = 0; k < NS; k++) {
             const fx = (k + 0.5) / NS;
@@ -262,17 +289,19 @@
                 }
                 const tm = lerpN(cA?.tMeanK ?? null, cB?.tMeanK ?? null, f) as number;
                 if (cloud > 0.15 && tm <= 273.15 && tm >= 253.15) {
-                    g.append('rect')
+                    gFields.append('rect')
                         .attr('x', xL).attr('y', yTop)
                         .attr('width', stripW + 0.7).attr('height', h)
-                        .attr('fill', 'url(#zonda-icing)')
+                        .attr('fill', `url(#${ids.icing})`)
                         .attr('fill-opacity', 0.85);
                 }
                 if (sev >= 0.75) {
-                    g.append('rect')
+                    gFields.append('rect')
                         .attr('x', xL).attr('y', yTop)
                         .attr('width', stripW + 0.7).attr('height', h)
-                        .attr('fill', sev >= 1.5 ? 'url(#zonda-turbs)' : 'url(#zonda-turbl)')
+                        .attr('fill', sev >= 1.5
+                            ? `url(#${ids.turbStrong})`
+                            : `url(#${ids.turbLight})`)
                         .attr('fill-opacity', 0.9);
                 }
             }
@@ -280,6 +309,7 @@
 
         // ---- precipitacion (por columna de datos, desde la base nubosa) ----
         const colSpacing = width / (N - 1);
+        const gPrecip = g.append('g').attr('clip-path', `url(#${ids.plotClip})`);
         cols.forEach(col => {
             if (col.precipMm <= 0.02) return;
             const cxp = x(col.frac);
@@ -292,7 +322,7 @@
             const yTerr = yM(col.terrainM);
             for (let k = -2; k <= 2; k++) {
                 const xx = cxp + k * (colSpacing / 6);
-                g.append('line')
+                gPrecip.append('line')
                     .attr('x1', xx).attr('y1', yBase).attr('x2', xx - 4).attr('y2', yTerr)
                     .attr('stroke', '#4ea3ff').attr('stroke-width', 1.4).attr('stroke-opacity', op);
             }
@@ -407,6 +437,9 @@
         width: 100%;
         height: 320px;
     }
+    @media (max-width: 480px) {
+        svg { height: clamp(260px, 85vw, 300px); }
+    }
     .xsec-status {
         margin: 8px 0;
         font-size: 12px;
@@ -423,6 +456,11 @@
         margin-top: 6px;
         font-size: 11px;
         opacity: 0.9;
+
+        @media (max-width: 480px) {
+            gap: 5px 9px;
+            font-size: 10px;
+        }
 
         span {
             display: inline-flex;
@@ -448,10 +486,17 @@
             opacity: 0.75;
         }
         .precip {
-            background: #4ea3ff;
+            background: repeating-linear-gradient(
+                105deg,
+                transparent 0 3px,
+                #4ea3ff 3px 5px,
+                transparent 5px 8px
+            );
         }
         .icing {
-            background: repeating-linear-gradient(-45deg, #56c8e8 0 2px, transparent 2px 6px);
+            background-image: radial-gradient(circle, #56c8e8 0 1.4px, transparent 1.5px);
+            background-position: 1px 1px;
+            background-size: 6px 6px;
         }
         .turbl {
             background: repeating-linear-gradient(45deg, #e8a01f 0 2px, transparent 2px 6px);

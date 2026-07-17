@@ -1,6 +1,6 @@
 {
     "name": "windy-plugin-abaco-de-harrison",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Diagnóstico de viento Zonda con el Ábaco de Harrison",
     "main": "dist/plugin.min.js",
     "type": "module",
@@ -15,7 +15,8 @@
     },
     "author": {
         "name": "Francisco J. Ramos Francés",
-        "email": "fcoramos@github.com"
+        "email": "fcoramos@gmail.com",
+        "url": "https://github.com/fcoramos"
     },
     "repository": {
         "type": "git",

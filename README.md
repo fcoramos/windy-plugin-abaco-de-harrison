@@ -3,7 +3,8 @@
 Plugin de Windy.com que reproduce el Abaco de Harrison para el diagnostico de viento
 Zonda sobre los Andes centrales.
 
-Autor: Francisco J. Ramos Francés (`fcoramos@github.com`).
+Autor: Francisco J. Ramos Francés ([GitHub: fcoramos](https://github.com/fcoramos)).
+Contacto: [fcoramos@gmail.com](mailto:fcoramos@gmail.com).
 
 ## Concepto
 
@@ -109,14 +110,14 @@ validas ~5..30 hPa):
   restringe a capas bajo la tropopausa. Si el criterio estricto no resuelve en una
   columna, se usa el minimo del gradiente sobre 7 km (< 4 K/km) y en el render los
   huecos se rellenan interpolando entre columnas vecinas.
-- Engelamiento (proxy derivado): nube (HR >= 70 %) con temperatura media de capa entre
+- Engelamiento (proxy derivado, representado con puntos celestes): nube (HR >= 70 %) con temperatura media de capa entre
   0 y -20 C (NWS; FAA AC 00-6B). La API de Windy no expone engelamiento por niveles
   (solo un escalar opcional `icing` por paso de tiempo, sin documentar). El proxy no
   modela SLD/llovizna engelante ni Cb hasta -40 C; no sustituye SIGMET/AIRMET.
 - Nubes: HR de capa >= 70 % con desenfoque gaussiano; turbulencia como trama diagonal
   (naranja ligera, roja fuerte) para no ensuciar el color de las nubes; precipitacion
-  desde la base nubosa; isoterma 0 C roja discontinua; terreno opaco dibujado encima de
-  las capas y la interfase de Scorer (magenta) sobre el terreno.
+  con barras diagonales desde la base nubosa; isoterma 0 C roja discontinua; terreno
+  opaco dibujado encima de las capas y la interfase de Scorer (magenta) sobre el terreno.
 - Boton GRAMET: abre el corte de Ogimet (GFS) para SCEL-SAME en pestana nueva con
   tref = instante del timeline. No se incrusta la imagen: Ogimet prohibe el acceso
   automatizado (robots.txt) y es un servicio gratuito con limites de uso; solo enlace
@@ -144,6 +145,10 @@ fuente de navegacion.
 - Enlace "¿Que es el Abaco de Harrison?" que abre un popup explicativo.
 - Selector de idioma ES/EN que traduce todo el plugin, incluidas las etiquetas del
   grafico.
+- Controles para minimizar el panel hacia la derecha, restaurarlo y cerrar la extension.
+  En iPad horizontal, el panel y el mapa ocupan cada uno la mitad de la pantalla. En
+  telefonos, los graficos, la leyenda y la tabla se compactan sin desbordamiento lateral.
+- El pie de la extension muestra el correo de contacto y la version publicada.
 
 ## Perfil vertical SCL <-> MDZ (diagnostico por capa)
 

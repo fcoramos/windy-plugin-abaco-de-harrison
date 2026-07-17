@@ -2,7 +2,25 @@
     {title}
 </div>
 <svelte:window on:keydown={handleGlobalKeydown} />
-<section bind:this={pluginElement} class="plugin__content zonda-plugin">
+<section
+    bind:this={pluginElement}
+    class="plugin__content zonda-plugin"
+    class:minimized={panelMinimized}
+>
+    <div class="zonda-panel-actions" role="group" aria-label={t.panelControls}>
+        <button
+            type="button"
+            aria-label={panelMinimized ? t.restorePanel : t.minimizePanel}
+            title={panelMinimized ? t.restorePanel : t.minimizePanel}
+            on:click={togglePanelMinimized}
+        >{panelMinimized ? '‹' : '›'}</button>
+        <button
+            type="button"
+            aria-label={t.closePlugin}
+            title={t.closePlugin}
+            on:click={closePlugin}
+        >&times;</button>
+    </div>
     <div
         class="plugin__title plugin__title--chevron-back"
         on:click={() => bcast.emit('rqstOpen', 'menu')}
@@ -117,6 +135,10 @@
     </button>
 
     <small class="size-s zonda-foot">{t.disclaimer}</small>
+    <small class="size-s zonda-contact">
+        {t.contact}: <a href="mailto:fcoramos@gmail.com">fcoramos@gmail.com</a>
+    </small>
+    <small class="size-s zonda-version">{t.version}: {version}</small>
 
     <!-- ===== Popup explicativo ===== -->
     {#if showInfo}
@@ -171,7 +193,7 @@
     import { PLUGIN_ACTIVE_EVENT } from './lib/lifecycle';
     import type { LatLon } from '@windy/interfaces.d';
 
-    const { title, name } = config;
+    const { title, name, version } = config;
     const instanceHost = window as unknown as { __zondaInstanceSequence?: number };
     const instanceId = (instanceHost.__zondaInstanceSequence ?? 0) + 1;
     instanceHost.__zondaInstanceSequence = instanceId;
@@ -306,6 +328,8 @@
 
     const handleActiveInstance = (event: Event) => {
         if ((event as CustomEvent<number>).detail === instanceId) return;
+        panelMinimized = false;
+        syncPanelState();
         pluginElement.style.display = 'none';
         removeFixMarkers(fixMarkers);
     };
@@ -317,6 +341,8 @@
     });
     onDestroy(() => {
         window.removeEventListener(PLUGIN_ACTIVE_EVENT, handleActiveInstance);
+        panelMinimized = false;
+        syncPanelState();
         removeFixMarkers(fixMarkers);
         if (markerHost.__zondaRouteMarkers === fixMarkers) {
             delete markerHost.__zondaRouteMarkers;
@@ -328,6 +354,23 @@
     let profileReversed = false;
     let showInfo = false;
     let showProfileInfo = false;
+    let panelMinimized = false;
+    const minimizedBodyClass = 'zonda-panel-is-minimized';
+    const minimizedHostClass = 'zonda-panel-minimized';
+
+    const syncPanelState = () => {
+        pluginElement?.parentElement?.classList.toggle(minimizedHostClass, panelMinimized);
+        document.body.classList.toggle(minimizedBodyClass, panelMinimized);
+    };
+    const togglePanelMinimized = () => {
+        panelMinimized = !panelMinimized;
+        syncPanelState();
+    };
+    const closePlugin = () => {
+        panelMinimized = false;
+        syncPanelState();
+        bcast.emit('rqstClose', name);
+    };
     const handleGlobalKeydown = (event: KeyboardEvent) => {
         if (event.key !== 'Escape') return;
         showInfo = false;
@@ -357,6 +400,12 @@
 
     const T = {
         es: {
+            panelControls: 'Controles de la extensión',
+            minimizePanel: 'Minimizar hacia la derecha',
+            restorePanel: 'Restaurar la extensión',
+            closePlugin: 'Cerrar la extensión',
+            contact: 'Contacto',
+            version: 'Versión',
             heading: 'Ábaco de Harrison — Viento Zonda',
             intro:
                 'Diagnóstico de onda de montaña sobre los Andes centrales combinando la ' +
@@ -397,7 +446,7 @@
                         'Tropopausa: línea oliva discontinua, aproximación térmica de la OMM (1957) ' +
                         '— primer nivel donde el gradiente cae a ≤ 2 K/km y se mantiene ~2 km — ' +
                         'calculada sobre capas gruesas (precisión del orden de ±1 km).',
-                    'Engelamiento (proxy derivado, trama celeste): se marca donde hay nube ' +
+                    'Engelamiento (proxy derivado, punteado celeste): se marca donde hay nube ' +
                         '(HR ≥ 70 %) y la temperatura media de la capa está entre 0 y −20 °C, el ' +
                         'rango donde se concentra el agua líquida sobreenfriada (NWS; FAA AC 00-6B: ' +
                         'casi todo el engelamiento ocurre entre 0 y −20 °C, con máximo entre −8 y ' +
@@ -507,6 +556,12 @@
             },
         },
         en: {
+            panelControls: 'Plugin controls',
+            minimizePanel: 'Minimize to the right',
+            restorePanel: 'Restore plugin',
+            closePlugin: 'Close plugin',
+            contact: 'Contact',
+            version: 'Version',
             heading: 'Harrison Abacus — Zonda Wind',
             intro:
                 'Mountain-wave diagnosis over the central Andes combining the model-derived SCEL−SAME QNH ' +
@@ -545,7 +600,7 @@
                         'Tropopause: dashed olive line, WMO (1957) thermal approximation — lowest ' +
                         'level where the lapse rate drops to ≤ 2 K/km and holds for ~2 km — ' +
                         'computed over thick layers (accuracy on the order of ±1 km).',
-                    'Icing (derived proxy, cyan hatch): flagged where there is cloud (RH ≥ 70%) ' +
+                    'Icing (derived proxy, cyan dots): flagged where there is cloud (RH ≥ 70%) ' +
                         'and the layer-mean temperature is between 0 and −20 °C, the range where ' +
                         'supercooled liquid water concentrates (NWS; FAA AC 00-6B: almost all icing ' +
                         'occurs between 0 and −20 °C, peaking between −8 and −12 °C). Windy\'s data ' +
@@ -653,6 +708,52 @@
         max-height: calc(100vh - 60px);
         overscroll-behavior: contain;
         -webkit-overflow-scrolling: touch;
+
+        &.minimized {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            height: 48px !important;
+            min-height: 0 !important;
+            max-height: 48px !important;
+            padding: 4px !important;
+            overflow: hidden !important;
+            transform: none !important;
+
+            > :not(.zonda-panel-actions) {
+                display: none !important;
+            }
+            .zonda-panel-actions {
+                position: static;
+                float: none;
+                margin: 0;
+            }
+        }
+    }
+    .zonda-panel-actions {
+        position: sticky;
+        top: 6px;
+        z-index: 25;
+        float: right;
+        display: flex;
+        gap: 4px;
+        margin: 0 0 8px 10px;
+
+        button {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            background: rgba(20, 29, 40, 0.92);
+            color: inherit;
+            font-size: 26px;
+            line-height: 1;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
     }
     .zonda-topbar {
         display: flex;
@@ -788,6 +889,89 @@
         margin-top: 8px;
         opacity: 0.75;
         line-height: 1.5;
+    }
+    .zonda-contact {
+        display: block;
+        margin-top: 4px;
+        opacity: 0.85;
+
+        a {
+            color: inherit;
+            text-decoration: underline;
+        }
+    }
+    .zonda-version {
+        display: block;
+        margin-top: 2px;
+        opacity: 0.7;
+    }
+
+    :global(#plugin-windy-plugin-abaco-de-harrison.zonda-panel-minimized) {
+        position: fixed !important;
+        inset: 8px 8px auto auto !important;
+        width: 92px !important;
+        height: 48px !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        border-radius: 8px;
+        z-index: 30 !important;
+    }
+    :global(#plugin-windy-plugin-abaco-de-harrison.zonda-panel-minimized > .plugin__mobile-header) {
+        display: none !important;
+    }
+    :global(body.zonda-panel-is-minimized #map-container) {
+        transform: translateX(0) !important;
+    }
+
+    /* Windy trata los iPad como desktop o mobile según el tamaño. En horizontal,
+       el rhpane y el desplazamiento del mapa ocupan exactamente media pantalla. */
+    @media (min-width: 700px) and (max-width: 1400px) and (orientation: landscape) {
+        :global(body.onwindy-plugin-abaco-de-harrison:not(.zonda-panel-is-minimized) #plugin-windy-plugin-abaco-de-harrison.plugin-rhpane) {
+            width: 50vw !important;
+        }
+        :global(html#device-desktop body.onwindy-plugin-abaco-de-harrison:not(.zonda-panel-is-minimized) #map-container) {
+            transform: translateX(-25vw) !important;
+        }
+    }
+    @media (max-width: 480px) {
+        .zonda-plugin:not(.minimized) {
+            padding-left: 14px !important;
+            padding-right: 14px !important;
+        }
+        .zonda-topbar {
+            align-items: flex-start;
+
+            h2 {
+                min-width: 0;
+                font-size: 18px;
+                line-height: 1.2;
+            }
+        }
+        .zonda-intro {
+            font-size: 12px;
+            line-height: 1.45;
+        }
+        .zonda-table {
+            width: 100%;
+            table-layout: fixed;
+            font-size: 10px;
+
+            th,
+            td {
+                padding: 3px 2px;
+                overflow-wrap: anywhere;
+            }
+            th:nth-child(1) { width: 16%; }
+            th:nth-child(2),
+            th:nth-child(3) { width: 14%; }
+            th:nth-child(4) { width: 12%; }
+            th:nth-child(5) { width: 14%; }
+            th:nth-child(6) { width: 30%; }
+            td.diag,
+            th:last-child {
+                white-space: normal;
+            }
+        }
     }
 
     .zonda-modal-backdrop {
