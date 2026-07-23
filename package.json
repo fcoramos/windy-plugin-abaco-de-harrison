@@ -25,7 +25,7 @@
     "license": "ISC",
     "devDependencies": {
         "@types/d3": "^7.4.3",
-        "@windycom/plugin-devtools": "^3.0.3",
+        "@windycom/plugin-devtools": "^3.0.4",
         "d3": "^7.9.0",
         "svelte": "4.2.20",
         "svelte-check": "^4.7.3",
