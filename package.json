@@ -27,7 +27,7 @@
         "@types/d3": "^7.4.3",
         "@windycom/plugin-devtools": "^3.0.3",
         "d3": "^7.9.0",
-        "svelte": "4.2.20",
+        "svelte": "5.56.9",
         "svelte-check": "^4.7.3",
         "typescript": "5.9.3",
         "vitest": "^4.1.10"
